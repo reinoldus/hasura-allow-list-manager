@@ -23,7 +23,6 @@ export default {
   async fetch() {
     this.queries = await this.$axios.$get('http://127.0.0.1:5151/')
     this.allowList = await this.$axios.$get('http://127.0.0.1:5151/allow-list')
-
   },
   methods: {
     addToHasura(name, query) {

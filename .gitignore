@@ -1,3 +1,4 @@
+/env_python_container
 # Created by .ignore support plugin (hsz.mobi)
 ### Node template
 # Logs
@@ -88,3 +89,4 @@ sw.*
 
 # Vim swap files
 *.swp
+/env_hasura_python
