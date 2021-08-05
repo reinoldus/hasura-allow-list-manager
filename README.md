@@ -18,6 +18,7 @@ HASURA_CONTAINER_NAME="name-of-your-hasura-container"
 HASURA_URL="http://localhost:8080"
 ```
 
+Then run `./start.sh`
 
 # How does it work?
 
