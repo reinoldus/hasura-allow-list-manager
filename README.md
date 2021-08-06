@@ -30,6 +30,8 @@ If you do not know what to add: `query { test {id name}}` just paste this here:
 
 All you have to do know is execute a bunch of queries through your frontend or whatever you are using and the queries should appear in the frontend.
 
+It's is important that all your queries have unique names! It's only okay to have the same name if the query is execute by a different role, because we prepend the query role to the queryName before saving to hasura
+
 # How does it work?
 
 We are listening to the hasura docker container logs where all the queries that are requested are logged. (Your hasura instance has to enable "query-log".)
@@ -48,3 +50,8 @@ Incredibly ugly:
 
 ![Screenshot 2021-08-06 at 09-24-17 hasura-allow-list-manager](https://user-images.githubusercontent.com/2091290/128466412-130867c6-6370-469e-ae15-b7607354a1a8.jpg)
 
+The json on the bottom holds the queries in the allow list. the queries on top are the queries from the hasura log.
+
+Red means: A query with this name already exists in hasura but the hash is different
+Green means: Query is in allow-list and unchanged
+Orange means: Query is not on allow list
