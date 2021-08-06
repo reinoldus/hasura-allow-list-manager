@@ -20,6 +20,13 @@ HASURA_URL="http://localhost:8080"
 
 Then run `./start.sh`
 
+Important: Before you can add queries you have to add one query via the hasura console to the allow list.
+
+This will add the "allowed-queries" collection to hasura which is required. Hasura allows to create collections to better
+manage queries but that is not supported so far:
+
+If you do not know what to add: `query { test {id name}}` just paste this here:
+
 # How does it work?
 
 We are listening to the hasura docker container logs where all the queries that are requested are logged.

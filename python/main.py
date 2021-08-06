@@ -51,7 +51,7 @@ def add_query():
             }
         }
     )
-    return f"{response.status_code}"
+    return jsonify(response.json())
 
 @app.route("/delete-query", methods=["POST"])
 def delete_query():
@@ -94,7 +94,9 @@ def refresh_queries():
                 # print("#" * 20, "START", "#" * 20)
                 # print(query)
                 # print(queryName)
-                # pprint(logObject['detail']['operation']['user_vars'])
+                print(logObject['detail']['operation']['user_vars'])
+                user_role = logObject['detail']['operation']['user_vars']['x-hasura-role']
+                queryName = f"{user_role}_{queryName}"
                 if queryName not in QUERY_CACHE:
                     print(query.split())
                     QUERY_CACHE[queryName] = {"raw": query, "hash": hashQuery(query)}

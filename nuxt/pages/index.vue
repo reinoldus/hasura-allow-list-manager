@@ -39,7 +39,7 @@ export default {
         name,
         query
       }).then((data) => {
-        alert(data)
+        console.log(data)
         this.$fetch()
       })
     },
@@ -48,7 +48,7 @@ export default {
         name,
         query
       }).then((data) => {
-        alert(data)
+        console.log(data)
         this.$fetch()
       })
     },
@@ -57,7 +57,7 @@ export default {
         name,
         query
       }).then((data) => {
-        alert(data)
+        console.log(data)
         this.$fetch()
       })
     }
