@@ -17,32 +17,63 @@ cors = CORS(app, resources={
 })
 QUERY_CACHE: Dict = {}
 
+HASURA_URL = os.getenv("HASURA_URL", "http://localhost:8080")
+
 
 def hashQuery(query):
     return hashlib.md5(''.join(query.split()).encode('utf-8')).hexdigest()
 
 
-@app.route("/add-to-hasura", methods=["POST"])
-def add_to_hasura():
-    req = request.json
+def api_call(payload: Dict):
     response = r.post(
-        "http://localhost:8080/v1/metadata",
-        json={
-            "type": "add_query_to_collection",
-            "args": {
-                "collection_name": "allowed-queries",
-                "query_name": req['name'],
-                "query": req['query']
-            }
-        },
+        f"{HASURA_URL}/v1/metadata",
+        json=payload,
         headers={
             "X-Hasura-Role": "admin",
             "X-Hasura-Admin-Secret": os.getenv('HASURA_ADMIN_SECRET'),
         }
     )
 
-    return jsonify(QUERY_CACHE)
+    return response
 
+
+@app.route("/add-query", methods=["POST"])
+def add_query():
+    req = request.json
+    print(f"{HASURA_URL}/v1/metadata")
+    response = api_call(
+        {
+            "type": "add_query_to_collection",
+            "args": {
+                "collection_name": "allowed-queries",
+                "query_name": req['name'],
+                "query": req['query']
+            }
+        }
+    )
+    return f"{response.status_code}"
+
+@app.route("/delete-query", methods=["POST"])
+def delete_query():
+    req = request.json
+    print(f"{HASURA_URL}/v1/metadata")
+    response = api_call(
+        {
+            "type": "drop_query_from_collection",
+            "args": {
+                "collection_name": "allowed-queries",
+                "query_name": req['name']
+            }
+        }
+    )
+    return f"{response.status_code}"
+
+@app.route("/update-query", methods=["POST"])
+def update_query():
+    status_code = delete_query()
+    status_code_2 = add_query()
+
+    return f"{status_code}, {status_code_2}"
 
 @app.route("/")
 def refresh_queries():
@@ -54,7 +85,7 @@ def refresh_queries():
             logObject = json.loads(line)
         except JSONDecodeError:
             continue
-        if logObject['type'] == 'http-log':
+        if "type" in logObject and logObject['type'] == 'http-log':
             hasuraQuery = logObject['detail']['operation'].get('query')
             if hasuraQuery is not None and "query" in hasuraQuery:
                 query = hasuraQuery['query']
@@ -68,6 +99,7 @@ def refresh_queries():
                     print(query.split())
                     QUERY_CACHE[queryName] = {"raw": query, "hash": hashQuery(query)}
                 else:
+                    QUERY_CACHE[queryName] = {"raw": query, "hash": hashQuery(query)}
                     print(queryName, hashQuery(query))
 
     return jsonify(QUERY_CACHE)
@@ -76,7 +108,7 @@ def refresh_queries():
 @app.route("/allow-list")
 def allow_list():
     response = r.post(
-        "http://localhost:8080/v1/metadata",
+        f"{HASURA_URL}/v1/metadata",
         json={
             "args": {},
             "type": "export_metadata",

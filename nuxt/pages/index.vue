@@ -1,14 +1,23 @@
 <template>
   <div v-if='!$fetchState.pending'>
-    <div v-for="(value, key) in queries" :key='key'>
-      <div v-if='allowList["hashes"].includes(value["hash"])' style='width: 100px;height:199px;background-color: green;'>dd</div>
-      <div v-else-if='key in queries' style='width: 100px;height:199px;background-color: orange;'>dd</div>
-      {{key}}
-      <div>{{value.raw}}</div>
-      <div>{{value.hash}}</div>
-      <button @click='addToHasura(key, value.raw)'>Add to hasura</button>
+    <div v-for='(value, key) in queries' :key='key' :class='{
+      "bg-danger": !allowList["hashes"].includes(value["hash"]) && key in allowList.queries,
+      "bg-success": allowList["hashes"].includes(value["hash"]),
+      "bg-warning": !allowList["hashes"].includes(value["hash"]) && !(key in allowList.queries),
+      "p-4": true
+    }'>
+      {{ key }}
+      <div>{{ value.raw }}</div>
+      <div>{{ value.hash }}</div>
+      <button v-if='!allowList["hashes"].includes(value["hash"]) && !(key in allowList.queries)'
+              @click='addQuery(key, value.raw)'>Add to hasura
+      </button>
+      <button v-else-if='!allowList["hashes"].includes(value["hash"]) && key in allowList.queries'
+              @click='updateQuery(key, value.raw)'>Update
+      </button>
+      <button v-else @click='deleteQuery(key, value.raw)'>Delete</button>
     </div>
-    <pre>{{allowList}}</pre>
+    <pre>{{ allowList }}</pre>
   </div>
 </template>
 
@@ -25,12 +34,51 @@ export default {
     this.allowList = await this.$axios.$get('http://127.0.0.1:5151/allow-list')
   },
   methods: {
-    addToHasura(name, query) {
-      this.$axios.$post('http://127.0.0.1:5151/add-to-hasura', {
+    addQuery(name, query) {
+      this.$axios.$post('http://127.0.0.1:5151/add-query', {
         name,
         query
+      }).then((data) => {
+        alert(data)
+        this.$fetch()
+      })
+    },
+    deleteQuery(name, query) {
+      this.$axios.$post('http://127.0.0.1:5151/delete-query', {
+        name,
+        query
+      }).then((data) => {
+        alert(data)
+        this.$fetch()
+      })
+    },
+    updateQuery(name, query) {
+      this.$axios.$post('http://127.0.0.1:5151/update-query', {
+        name,
+        query
+      }).then((data) => {
+        alert(data)
+        this.$fetch()
       })
     }
   }
 }
 </script>
+
+<style>
+.bg-success {
+  background-color: lightgreen;
+}
+
+.bg-warning {
+  background-color: rgba(255, 165, 0, 0.5);
+}
+
+.bg-danger {
+  background-color: lightcoral;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+</style>
