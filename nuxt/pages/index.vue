@@ -1,28 +1,58 @@
 <template>
   <div v-if='!$fetchState.pending'>
-    <div v-for='(value, key) in queries' :key='key' :class='{
-      "bg-danger": !allowList["hashes"].includes(value["hash"]) && key in allowList.queries,
-      "bg-success": allowList["hashes"].includes(value["hash"]),
-      "bg-warning": !allowList["hashes"].includes(value["hash"]) && !(key in allowList.queries),
-      "p-4": true
-    }'>
-      {{ key }}
-      <div>{{ value.raw }}</div>
-      <div>{{ value.hash }}</div>
-      <button v-if='!allowList["hashes"].includes(value["hash"]) && !(key in allowList.queries)'
-              @click='addQuery(key, value.raw)'>Add to hasura
-      </button>
-      <button v-else-if='!allowList["hashes"].includes(value["hash"]) && key in allowList.queries'
-              @click='updateQuery(key, value.raw)'>Update
-      </button>
-      <button v-else @click='deleteQuery(key, value.raw)'>Delete</button>
+    <!--    {{ queriesOnAllowList }}-->
+    <!--    {{ queriesOutdated }}-->
+    {{ queriesNotOnAllowList }}
+    <div class='flex flex-col'>
+      <query v-for='{hash, savedQuery} in queriesOutdated'
+             :key='hash'
+             state='stall'
+             class='bg-danger' :query-name='$store.state.sessionQueries[hash].name' :old-query='savedQuery'
+             :query-object='$store.state.sessionQueries[hash]'
+             :allow-list='allowList'
+             @updated='$fetch()'>
+
+      </query>
     </div>
-    <pre>{{ allowList }}</pre>
+    xx
+    <div class='flex flex-col mt-5'>
+      <query v-for='hash in queriesNotOnAllowList'
+             :key='hash'
+             state='notOnList'
+             class='bg-warning my-2' :query-name='$store.state.sessionQueries[hash].name'
+             :query-object='$store.state.sessionQueries[hash]'
+             :allow-list='allowList'
+             @updated='$fetch()'>
+
+      </query>
+    </div>
+    <div class='flex flex-col mt-5'>
+      <query v-for='hash in queriesOnAllowList'
+             :key='hash'
+             state='onList'
+             class='bg-success my-2' :query-name='$store.state.sessionQueries[hash].name'
+             :query-object='$store.state.sessionQueries[hash]'
+             :allow-list='allowList'
+             @updated='$fetch()'>
+
+      </query>
+    </div>
+    <div style='display: flex; flex-direction: column;'>
+
+      <!--      <query v-for='(value, key) in queries' :key='key' :query-name='key' :query-object='value' :allow-list='allowList'-->
+      <!--             @updated='$fetch()'>-->
+
+      <!--      </query>-->
+    </div>
+    <pre style='max-width: 100%;overflow-x: scroll;'>{{ allowList }}</pre>
   </div>
 </template>
 
 <script>
+import Query from '../components/query'
+
 export default {
+  components: { Query },
   data() {
     return {
       queries: undefined,
@@ -33,33 +63,60 @@ export default {
     this.queries = await this.$axios.$get('http://127.0.0.1:5151/')
     this.allowList = await this.$axios.$get('http://127.0.0.1:5151/allow-list')
   },
-  methods: {
-    addQuery(name, query) {
-      this.$axios.$post('http://127.0.0.1:5151/add-query', {
-        name,
-        query
-      }).then((data) => {
-        console.log(data)
-        this.$fetch()
-      })
+  computed: {
+    hashes() {
+      return Object.keys(this.allowList.hash_to_query_name_map)
     },
-    deleteQuery(name, query) {
-      this.$axios.$post('http://127.0.0.1:5151/delete-query', {
-        name,
-        query
-      }).then((data) => {
-        console.log(data)
-        this.$fetch()
+    queriesOnAllowList() {
+      const sessionQueries = Object.keys(this.$store.state.sessionQueries)
+      const queries = Object.keys(this.$store.state.queries)
+
+      const onAllow = sessionQueries.filter((v) => {
+        return queries.includes(v)
       })
+
+      return onAllow
     },
-    updateQuery(name, query) {
-      this.$axios.$post('http://127.0.0.1:5151/update-query', {
-        name,
-        query
-      }).then((data) => {
-        console.log(data)
-        this.$fetch()
+    queriesNotOnAllowList() {
+      const sessionQueries = Object.keys(this.$store.state.sessionQueries)
+      const queries = Object.keys(this.$store.state.queries)
+
+      return sessionQueries.filter((v) => {
+        return !queries.includes(v)
       })
+
+    },
+    queriesOutdated() {
+      const outdatedQueries = []
+      const queryNames = []
+      const queriesByName = {}
+
+      // let's collect all the query names that we know
+      // Maybe we hav eto consider collections here at some point
+      for (const [, value] of Object.entries(this.$store.state.queries)) {
+        queryNames.push(...value.names)
+        for (const name of value.names) {
+          console.log(name)
+          queriesByName[name] = value.query
+        }
+      }
+
+      console.log(queriesByName)
+      // iterating over the queries in the current session
+      for (const [key, value] of Object.entries(this.$store.state.sessionQueries)) {
+
+        if (!this.queriesOnAllowList.includes(key)) {
+          if (value.queryName === name) {
+            outdatedQueries.push({
+              hash: key,
+              savedQuery: queriesByName[name]
+            })
+          }
+        }
+      }
+
+
+      return outdatedQueries
     }
   }
 }
