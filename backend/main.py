@@ -9,6 +9,9 @@ from flask_cors import CORS
 
 from flask import Flask, jsonify, request
 
+from backend.config import HASURA_URL
+from backend.utils import api_call, hash_query
+
 app = Flask(__name__)
 cors = CORS(app, resources={
     r"/*": {
@@ -17,24 +20,22 @@ cors = CORS(app, resources={
 })
 QUERY_CACHE: Dict = {}
 
-HASURA_URL = os.getenv("HASURA_URL", "http://localhost:8080")
 
 
-def hashQuery(query):
-    return hashlib.md5(''.join(query.split()).encode('utf-8')).hexdigest()
-
-
-def api_call(payload: Dict):
-    response = r.post(
-        f"{HASURA_URL}/v1/metadata",
-        json=payload,
-        headers={
-            "X-Hasura-Role": "admin",
-            "X-Hasura-Admin-Secret": os.getenv('HASURA_ADMIN_SECRET'),
+@app.route("/add-collection", methods=["POST"])
+def add_collection():
+    req = request.json
+    print(f"{HASURA_URL}/v1/metadata")
+    response = api_call(
+        {
+            "type": "create_query_collection",
+            "args": {
+                "name": req['collection_name'],
+                "comment": req['comment'],
+            }
         }
     )
-
-    return response
+    return jsonify(response.json())
 
 
 @app.route("/add-query", methods=["POST"])
@@ -45,13 +46,14 @@ def add_query():
         {
             "type": "add_query_to_collection",
             "args": {
-                "collection_name": "allowed-queries",
+                "collection_name": req['collectionName'],
                 "query_name": req['name'],
                 "query": req['query']
             }
         }
     )
     return jsonify(response.json())
+
 
 @app.route("/delete-query", methods=["POST"])
 def delete_query():
@@ -68,12 +70,14 @@ def delete_query():
     )
     return f"{response.status_code}"
 
+
 @app.route("/update-query", methods=["POST"])
 def update_query():
     status_code = delete_query()
     status_code_2 = add_query()
 
     return f"{status_code}, {status_code_2}"
+
 
 @app.route("/")
 def refresh_queries():
@@ -99,10 +103,10 @@ def refresh_queries():
                 queryName = f"{user_role}_{queryName}"
                 if queryName not in QUERY_CACHE:
                     print(query.split())
-                    QUERY_CACHE[queryName] = {"raw": query, "hash": hashQuery(query)}
+                    QUERY_CACHE[queryName] = {"raw": query, "hash": hash_query(query)}
                 else:
-                    QUERY_CACHE[queryName] = {"raw": query, "hash": hashQuery(query)}
-                    print(queryName, hashQuery(query))
+                    QUERY_CACHE[queryName] = {"raw": query, "hash": hash_query(query)}
+                    print(queryName, hash_query(query))
 
     return jsonify(QUERY_CACHE)
 
@@ -126,14 +130,19 @@ def allow_list():
 
     queries = {}
     hashes = []
+    hash_to_query_name_map = {}
     for collection in metadata['query_collections']:
         for query in collection['definition']['queries']:
             queries[query['name']] = query['query']
-            print(query['name'], hashQuery(query['query']), "from h")
-            hashes.append(hashQuery(query['query']))
+            print(query['name'], hash_query(query['query']), "from h")
+            _hash = hash_query(query['query'])
+            hashes.append(_hash)
+            hash_to_query_name_map[_hash] = query['name']
 
-    return jsonify({'queries': queries, 'hashes': hashes})
+    return jsonify({'queries': queries, 'hashes': hashes, 'hash_to_query_name_map': hash_to_query_name_map})
 
+from backend.blueprints.collections import collections as b_collections
 
 if __name__ == "__main__":
+    app.register_blueprint(b_collections)
     app.run(debug=True, port=5151, host="0.0.0.0")
