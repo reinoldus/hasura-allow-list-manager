@@ -45,6 +45,24 @@ allowed-queries".
 
 # How does it work?
 
-We are listening to the hasura docker container logs where all the queries that are requested are logged.
+We are listening to the hasura docker container logs where all the queries that are requested are logged. (Your hasura instance has to enable "query-log".)
+
+Every time you reload the frontend we'll fetch the most recent metadata from hasura and take out the queries from there which are already in the allow-list.
+
+The queries from both sources are hashed in the same way to make it easier to compare them, this should be fine because hasura is pretty strict with it's allow list, if you change the order of the attributes in your query, it's considered a different query.
+
+And that is pretty much it nothing more to it. 
 
 Details can be seen in: `./python/main.py` - it's pretty simple
+
+# How does it look:
+
+Incredibly ugly:
+
+![Screenshot 2021-08-06 at 09-24-17 hasura-allow-list-manager](https://user-images.githubusercontent.com/2091290/128466412-130867c6-6370-469e-ae15-b7607354a1a8.jpg)
+
+The json on the bottom holds the queries in the allow list. the queries on top are the queries from the hasura log.
+
+Red means: A query with this name already exists in hasura but the hash is different
+Green means: Query is in allow-list and unchanged
+Orange means: Query is not on allow list
