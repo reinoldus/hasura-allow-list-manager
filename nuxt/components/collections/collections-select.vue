@@ -1,20 +1,12 @@
 <template>
-  <div>
-    {{collectionNames}}
-    <select v-model='selected'>
-      <option v-for='i in collectionNames' :key='i'>{{i}}</option>
-    </select>
-  </div>
+  <select v-model='selected'>
+    <option v-for='i in collectionNames' :key='i'>{{ i }}</option>
+  </select>
 </template>
 
 <script>
 export default {
-  name: 'collections-select',
-  data() {
-    return {
-      selected: this.value
-    }
-  },
+  name: 'CollectionsSelect',
   props: {
     value: {
       type: String,
@@ -23,14 +15,19 @@ export default {
       }
     }
   },
-  watch: {
-    selected() {
-      this.$emit('input', this.selected)
+  data() {
+    return {
+      selected: this.value
     }
   },
   computed: {
     collectionNames() {
-      return Object.keys(this.$store.state.collections.collections)
+      return Object.keys(this.$store.state.collections)
+    }
+  },
+  watch: {
+    selected() {
+      this.$emit('input', this.selected)
     }
   }
 }

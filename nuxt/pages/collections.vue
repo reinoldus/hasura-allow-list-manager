@@ -1,15 +1,31 @@
 <template>
   <div>
     <collections-create></collections-create>
-    <pre>
-    {{$store.state.collections}}
-    </pre>
+    <h3>Collections on allow list</h3>
+    {{ $store.state.collectionsOnAllowList }}
+    <hr class='my-3'>
+    <div v-for='(collection, name) of $store.state.collections' :key='name'>
+      <h4 :class='{
+          "bg-green-700 text-white": $store.state.collectionsOnAllowList.includes(name),
+          "p-2": true
+        }'>{{ name }}</h4>
+      <button class='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+              @click='addCollectionToAllowList(name)'>
+        Add Collection to allow list
+      </button>
+      <p-button @click='deleteCollection(name)'>Delete collection</p-button>
+      <pre>
+        {{ collection }}
+        </pre>
+    </div>
   </div>
 </template>
 
 <script>
 
 import CollectionsCreate from '../components/collections/collections-create'
+import { apiRequest } from '../utils/utils'
+
 export default {
   name: 'Collections',
   components: { CollectionsCreate },
@@ -19,6 +35,10 @@ export default {
       collections: undefined
     }
   },
+  async fetch() {
+    this.queries = await this.$axios.$get('http://127.0.0.1:5151/')
+    this.collections = await this.$axios.$get('http://127.0.0.1:5151/collections/list')
+  },
   computed: {
     hashes() {
       return Object.keys(this.allowList.hash_to_query_name_map)
@@ -27,9 +47,20 @@ export default {
   mounted() {
     this.$store.dispatch('getCollections')
   },
-  async fetch() {
-    this.queries = await this.$axios.$get('http://127.0.0.1:5151/')
-    this.collections = await this.$axios.$get('http://127.0.0.1:5151/collections/list')
+  methods: {
+    deleteCollection(name) {
+      apiRequest(this, '/collections/delete', {
+        name
+      })
+    },
+    addCollectionToAllowList(name) {
+      this.$axios.$post('http://127.0.0.1:5151/collections/add-to-allow-list', {
+        name
+      }).then((data) => {
+        console.log(data)
+        this.$emit('updated')
+      })
+    }
   }
 }
 </script>

@@ -25,7 +25,7 @@ QUERY_CACHE: Dict = {}
 @app.route("/add-collection", methods=["POST"])
 def add_collection():
     req = request.json
-    print(f"{HASURA_URL}/v1/metadata")
+
     response = api_call(
         {
             "type": "create_query_collection",
@@ -41,7 +41,7 @@ def add_collection():
 @app.route("/add-query", methods=["POST"])
 def add_query():
     req = request.json
-    print(f"{HASURA_URL}/v1/metadata")
+
     response = api_call(
         {
             "type": "add_query_to_collection",
@@ -58,7 +58,7 @@ def add_query():
 @app.route("/delete-query", methods=["POST"])
 def delete_query():
     req = request.json
-    print(f"{HASURA_URL}/v1/metadata")
+
     response = api_call(
         {
             "type": "drop_query_from_collection",
@@ -98,16 +98,12 @@ def refresh_queries():
                 # print("#" * 20, "START", "#" * 20)
                 # print(query)
                 # print(queryName)
-                print(logObject['detail']['operation']['user_vars'])
                 user_role = logObject['detail']['operation']['user_vars']['x-hasura-role']
                 queryName = f"{user_role}_{queryName}"
                 if queryName not in QUERY_CACHE:
-                    print(query.split())
                     QUERY_CACHE[queryName] = {"raw": query, "hash": hash_query(query)}
                 else:
                     QUERY_CACHE[queryName] = {"raw": query, "hash": hash_query(query)}
-                    print(queryName, hash_query(query))
-
     return jsonify(QUERY_CACHE)
 
 
@@ -134,7 +130,6 @@ def allow_list():
     for collection in metadata['query_collections']:
         for query in collection['definition']['queries']:
             queries[query['name']] = query['query']
-            print(query['name'], hash_query(query['query']), "from h")
             _hash = hash_query(query['query'])
             hashes.append(_hash)
             hash_to_query_name_map[_hash] = query['name']
@@ -142,7 +137,9 @@ def allow_list():
     return jsonify({'queries': queries, 'hashes': hashes, 'hash_to_query_name_map': hash_to_query_name_map})
 
 from backend.blueprints.collections import collections as b_collections
+from backend.blueprints.queries import queries as b_queries
 
 if __name__ == "__main__":
     app.register_blueprint(b_collections)
+    app.register_blueprint(b_queries)
     app.run(debug=True, port=5151, host="0.0.0.0")

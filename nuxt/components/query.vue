@@ -1,31 +1,33 @@
 <template>
   <div :class='{
-      "bg-danger": isStall,
-      "bg-success": isAdded,
-      "bg-warning": isNotAdded,
       "p-4": true
     }'>
-    <input v-if='isNotAdded' v-model='queryNameInternal' />
-    <h4 v-else>{{ queryNameInternal }} ({{allowList.hash_to_query_name_map[queryObject.hash]}})</h4>
-    <collections-select v-model='collectionName'></collections-select>
-    {{collectionName}}
-    <div>{{ queryObject.raw }}</div>
-    <div>{{ queryObject.hash }}</div>
-    <button v-if='!allowList["hashes"].includes(queryObject["hash"]) && !(queryName in allowList.queries)'
+    <h4>{{ queryNameInternal }}</h4>
+    {{ oldQuery }}
+    <!--    <pre>{{$store.state.queries[queryObject["hash"]]}}</pre>-->
+    <pre>{{ queryObject }}</pre>
+    <!--    <query-viewer :code='queryObject.query'></query-viewer>-->
+    <queries-add-to-collection :query='queryObject.query' :query-name='queryName'></queries-add-to-collection>
+    <button v-if='isNotAdded'
             @click='addQuery(queryNameInternal, queryObject.raw)'>Add to hasura
     </button>
-    <button v-else-if='!allowList["hashes"].includes(queryObject["hash"]) && queryName in allowList.queries'
+    <button v-else-if='isStall'
             @click='updateQuery(queryName, queryObject.raw)'>Update
     </button>
-    <button v-else @click='deleteQuery(queryName, queryObject.raw)'>Delete</button>
+
+    <queries-delete-from-collection v-if='isAdded'
+                                    :query-name='queryNameInternal'
+                                    :collections='queryObject.collections_by_hash'></queries-delete-from-collection>
   </div>
 </template>
 
 <script>
-import CollectionsSelect from './collections/collections-select'
+import QueriesAddToCollection from './queries/queries-add-to-collection'
+import QueriesDeleteFromCollection from './queries/queries-delete-from-collection'
+
 export default {
   name: 'Query',
-  components: { CollectionsSelect },
+  components: { QueriesDeleteFromCollection, QueriesAddToCollection },
   props: {
     queryName: {
       type: String,
@@ -34,6 +36,16 @@ export default {
     queryObject: {
       type: Object,
       required: true
+    },
+    state: {
+      type: String,
+      required: true
+    },
+    oldQuery: {
+      type: String,
+      default() {
+        return 'No old query'
+      }
     },
     allowList: {
       type: Object,
@@ -48,13 +60,13 @@ export default {
   },
   computed: {
     isAdded() {
-      return this.allowList.hashes.includes(this.queryObject.hash)
+      return this.state === 'onList'
     },
     isNotAdded() {
-      return !this.allowList.hashes.includes(this.queryObject.hash) && !(this.queryName in this.allowList.queries)
+      return this.state === 'notOnList'
     },
     isStall() {
-      return !this.allowList.hashes.includes(this.queryObject.hash) && this.queryName in this.allowList.queries
+      return this.state === 'stall'
     }
   },
   methods: {
@@ -63,15 +75,6 @@ export default {
         name,
         query,
         collectionName: this.collectionName
-      }).then((data) => {
-        console.log(data)
-        this.$emit('updated')
-      })
-    },
-    deleteQuery(name, query) {
-      this.$axios.$post('http://127.0.0.1:5151/delete-query', {
-        name,
-        query
       }).then((data) => {
         console.log(data)
         this.$emit('updated')

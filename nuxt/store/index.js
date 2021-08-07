@@ -1,5 +1,9 @@
 export const state = () => ({
-  collections: {}
+  collections: {},
+  collectionsOnAllowList: {},
+  queries: {},
+  sessionQueries: {},
+  modalContent: ''
 })
 
 export const mutations = {
@@ -12,8 +16,9 @@ export const mutations = {
   remove(state, { todo }) {
     state.list.splice(state.list.indexOf(todo), 1)
   },
-  setCollections(state, payload) {
-    state.collections = payload
+  setGeneric(state, payload) {
+    const { key, value } = payload
+    state[key] = value
   }
 }
 
@@ -21,6 +26,15 @@ export const mutations = {
 export const actions = {
   async getCollections(context) {
     const collections = await this.$axios.$get('http://127.0.0.1:5151/collections/list')
-    context.commit('setCollections', collections)
+    context.commit('setGeneric', { key: 'collections', value: collections.collections })
+    context.commit('setGeneric', { key: 'collectionsOnAllowList', value: collections.on_allow })
+    const queries = await this.$axios.$get('http://127.0.0.1:5151/queries/list')
+    context.commit('setGeneric', { key: 'queries', value: queries })
+    const sessionQueries = await this.$axios.$get('http://127.0.0.1:5151/queries/session/list')
+    context.commit('setGeneric', { key: 'sessionQueries', value: sessionQueries })
+
+  },
+  nuxtServerInit({ commit, dispatch }) {
+    dispatch('getCollections')
   }
 }

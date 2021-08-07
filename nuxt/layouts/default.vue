@@ -7,6 +7,9 @@
 
     </nav>
     <Nuxt />
+    <modal name='modal'>
+      <pre>{{ $store.state.modalContent }}</pre>
+    </modal>
   </div>
 </template>
 
