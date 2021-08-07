@@ -40,6 +40,12 @@ export default {
   eslint: {
     fix: true
   },
+  tailwindcss: {
+    cssPath: '~/assets/css/tailwind.css',
+    configPath: 'tailwind.config.js',
+    exposeConfig: false,
+    config: {}
+  },
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
