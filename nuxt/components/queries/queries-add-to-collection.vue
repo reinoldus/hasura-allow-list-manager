@@ -1,7 +1,7 @@
 <template>
   <div class='flex flex-col col p-4 '>
     <collections-select v-model='collection' class='my-4'></collections-select>
-    <p-button class='my-4' @click='addToCollection'>Add to collection</p-button>
+    <button class='btn my-4' @click='addToCollection'>Add to collection</button>
     {{ collection }}
   </div>
 </template>

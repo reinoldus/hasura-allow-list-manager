@@ -1,8 +1,9 @@
 <template>
   <div class='p-4 ml-2'>
-    <p-button v-for='collection in collections' :key='collection' class='my-4' @click='deleteQuery(collection)'>
+    <button v-for='collection in collections' :key='collection' class='btn my-4'
+            @click='deleteQuery(collection)'>
       Delete from {{ collection }}
-    </p-button>
+    </button>
   </div>
 </template>
 

@@ -8,10 +8,12 @@
     <pre>{{ queryObject }}</pre>
     <!--    <query-viewer :code='queryObject.query'></query-viewer>-->
     <queries-add-to-collection :query='queryObject.query' :query-name='queryName'></queries-add-to-collection>
-    <button v-if='isNotAdded'
-            @click='addQuery(queryNameInternal, queryObject.raw)'>Add to hasura
+    <button
+      v-if='isNotAdded'
+      class='btn'
+      @click='addQuery(queryNameInternal, queryObject.raw)'>Add to hasura
     </button>
-    <button v-else-if='isStall'
+    <button v-else-if='isStall' class='btn'
             @click='updateQuery(queryName, queryObject.raw)'>Update
     </button>
 
