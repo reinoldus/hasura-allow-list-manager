@@ -7,13 +7,8 @@
     <!--    <pre>{{$store.state.queries[queryObject["hash"]]}}</pre>-->
     <pre>{{ queryObject }}</pre>
     <!--    <query-viewer :code='queryObject.query'></query-viewer>-->
-    <queries-add-to-collection :query='queryObject.query' :query-name='queryName'></queries-add-to-collection>
-    <button
-      v-if='isNotAdded'
-      class='btn'
-      @click='addQuery(queryNameInternal, queryObject.raw)'>Add to hasura
-    </button>
-    <button v-else-if='isStall' class='btn'
+    <queries-add-to-collection :query='queryObject.query' :query-name='queryName' :is-update="isStall"></queries-add-to-collection>
+    <button v-if='isStall' class='btn'
             @click='updateQuery(queryName, queryObject.raw)'>Update
     </button>
 
@@ -72,16 +67,6 @@ export default {
     }
   },
   methods: {
-    addQuery(name, query) {
-      this.$axios.$post('http://127.0.0.1:5151/add-query', {
-        name,
-        query,
-        collectionName: this.collectionName
-      }).then((data) => {
-        console.log(data)
-        this.$emit('updated')
-      })
-    },
     updateQuery(name, query) {
       this.$axios.$post('http://127.0.0.1:5151/update-query', {
         name,

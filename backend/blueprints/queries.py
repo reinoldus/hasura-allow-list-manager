@@ -62,6 +62,15 @@ def add_to_collection():
 
     return jsonify(response.json())
 
+@queries.route('/update', methods=['POST'])
+def update_query():
+    req = request.json
+
+    delete()
+    add_to_collection()
+
+    return "Success", 200
+
 
 @queries.route('/session/list')
 def list_session_queries():
@@ -77,12 +86,12 @@ def list_session_queries():
     hash_to_collection = defaultdict(list)
     name_to_collection = defaultdict(list)
     for collection_name, queries in colls.items():
-        print(collection_name)
         for query in queries:
             hash_to_collection[query['hash']].append(collection_name)
             name_to_collection[query['name']].append(collection_name)
 
-    for line in container.logs().decode().split("\n"):
+    # We have read the logs bottom to top to get the latest query if a query changes
+    for line in reversed(container.logs().decode().split("\n")):
         try:
             logObject = json.loads(line)
         except json.JSONDecodeError:
@@ -96,6 +105,7 @@ def list_session_queries():
                 # print("#" * 20, "START", "#" * 20)
                 # print(query)
                 # print(queryName)
+                print(queryName)
                 query_hash = hash_query(query)
                 user_role = logObject['detail']['operation']['user_vars']['x-hasura-role']
                 if (queryName, user_role) in already_added_set:
@@ -118,6 +128,8 @@ def list_session_queries():
                 session_queries[query_hash]["hash"] = query_hash
                 session_queries[query_hash]["role"].append(user_role)
                 session_queries[query_hash]["role"] = list(set(session_queries[query_hash]["role"]))
+
+    print(session_queries)
 
     return jsonify(session_queries)
 

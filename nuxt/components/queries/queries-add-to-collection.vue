@@ -1,13 +1,15 @@
 <template>
   <div class='flex flex-col col p-4 '>
     <collections-select v-model='collection' class='my-4'></collections-select>
-    <button class='btn my-4' @click='addToCollection'>Add to collection</button>
+    <button v-if="!isUpdate" class='btn my-4' @click='addToCollection'>Add to collection</button>
+    <button v-else class='btn my-4' @click='updateInCollection'>Update collection</button>
     {{ collection }}
   </div>
 </template>
 
 <script>
 import CollectionsSelect from '../collections/collections-select'
+import {apiRequest} from "~/utils/utils";
 
 export default {
   name: 'QueriesAddToCollection',
@@ -20,6 +22,10 @@ export default {
     queryName: {
       type: String,
       required: true
+    },
+    isUpdate: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -32,13 +38,20 @@ export default {
       if (this.collection === null) {
         return
       }
-      this.$axios.$post('http://127.0.0.1:5151/queries/add', {
+      apiRequest(this, '/queries/add', {
         name: this.queryName,
         query: this.query,
         collection_name: this.collection
-      }).then((data) => {
-        console.log(data)
-        this.$emit('updated')
+      })
+    },
+    updateInCollection() {
+      if (this.collection === null) {
+        return
+      }
+      apiRequest(this, '/queries/update', {
+        name: this.queryName,
+        query: this.query,
+        collection_name: this.collection
       })
     }
   }

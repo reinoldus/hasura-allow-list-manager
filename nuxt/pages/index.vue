@@ -101,15 +101,14 @@ export default {
         }
       }
 
-      console.log(queriesByName)
       // iterating over the queries in the current session
-      for (const [key, value] of Object.entries(this.$store.state.sessionQueries)) {
+      for (const [key, sessionQueryObject] of Object.entries(this.$store.state.sessionQueries)) {
 
         if (!this.queriesOnAllowList.includes(key)) {
-          if (value.queryName === name) {
+          if (sessionQueryObject.name in queriesByName) {
             outdatedQueries.push({
               hash: key,
-              savedQuery: queriesByName[name]
+              savedQuery: queriesByName[sessionQueryObject.name]
             })
           }
         }
