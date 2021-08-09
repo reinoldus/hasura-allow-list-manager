@@ -2,12 +2,21 @@
   <div :class='{
       "p-4": true
     }'>
-    <h4>{{ queryNameInternal }}</h4>
+    <h1>{{ queryNameInternal }}</h1>
     {{ oldQuery }}
     <!--    <pre>{{$store.state.queries[queryObject["hash"]]}}</pre>-->
-    <pre>{{ queryObject }}</pre>
+    <pre class="overflow-x-scroll">{{ queryObject }}</pre>
+    <h5>This query is in the following collections:</h5>
+    <ul>
+      <li v-for="name in queryObject.collections_by_hash" :key="name">{{name}}</li>
+    </ul>
     <!--    <query-viewer :code='queryObject.query'></query-viewer>-->
-    <queries-add-to-collection :query='queryObject.query' :query-name='queryName' :is-update="isStall"></queries-add-to-collection>
+    <queries-add-to-collection :readonly='true' :query='queryObject.query' :query-name='queryName' :is-update="isStall"></queries-add-to-collection>
+    <ClientOnly>
+      <CodeEditor v-if="queryObject.query" :code="queryObject.query.slice(0, codeSlice)"/>
+      <button v-if="codeSlice" class="btn" @click="codeSlice = undefined">Show more than 200 characters</button>
+      <button v-else class="btn" @click="codeSlice = 200">Show ONLY 200 characters</button>
+    </ClientOnly>
     <button v-if='isStall' class='btn'
             @click='updateQuery(queryName, queryObject.raw)'>Update
     </button>
@@ -52,7 +61,8 @@ export default {
   data() {
     return {
       queryNameInternal: this.queryName,
-      collectionName: ''
+      collectionName: '',
+      codeSlice: 200
     }
   },
   computed: {
